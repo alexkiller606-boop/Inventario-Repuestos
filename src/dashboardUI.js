@@ -444,9 +444,10 @@ async function manejarSubmitProducto(e) {
     marca: document.getElementById('marca')?.value.trim() || null,
     precio_compra: document.getElementById('precio_compra')?.value || 0,
     precio_venta: document.getElementById('precio_venta').value,
-    stock: document.getElementById('stock')?.value || 0,
     stock_minimo: document.getElementById('stock_minimo')?.value || 5,
   };
+
+  if (!modoEdicion) datos.stock = document.getElementById('stock')?.value || 0;
 
   if (!datos.codigo || !datos.nombre || !datos.precio_venta) {
     mostrarMensaje('Completa los campos obligatorios (*)', 'error');
@@ -804,8 +805,8 @@ function cargarFormularioEdicion(producto) {
 
   const stockInput = document.getElementById('stock');
   if (stockInput) {
-    stockInput.disabled = false;
-    stockInput.title = 'Ajusta el stock del repuesto';
+    stockInput.disabled = true;
+    stockInput.title = 'Para modificar existencias, registra una entrada, salida o ajuste en el módulo de movimientos.';
   }
 
   modoEdicion = true;
