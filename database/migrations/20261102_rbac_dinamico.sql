@@ -123,6 +123,12 @@ as $$ select private.obtener_contexto_usuario(); $$;
 revoke all on function public.obtener_contexto_usuario() from public,anon;
 grant execute on function public.obtener_contexto_usuario() to authenticated;
 
+create or replace function public.puede_crear_usuarios()
+returns boolean language sql stable security invoker set search_path to ''
+as $ select private.tiene_permiso('/seguridad/usuarios','crear'); $;
+revoke all on function public.puede_crear_usuarios() from public,anon;
+grant execute on function public.puede_crear_usuarios() to authenticated;
+
 create or replace function private.registrar_auditoria(
  p_accion text,p_tabla text,p_registro_id integer default null,
  p_datos_anteriores jsonb default null,p_datos_nuevos jsonb default null
