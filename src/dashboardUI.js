@@ -18,6 +18,8 @@ import {
   obtenerMovimientos,
   registrarAuditoria,
 } from './inventario.js';
+import { tienePermisoEnPerfil } from './auth.js';
+import { renderizarSeguridad } from './seguridadUI.js';
 
 // Estado de la aplicación
 let productosActuales = [];
@@ -33,10 +35,10 @@ function rolNormalizado(rol) {
   return (rol || '').toLowerCase().trim();
 }
 function puedeEditarInventario(rol) {
-  return ['administrador', 'almacenista'].includes(rolNormalizado(rol));
+  return tienePermisoEnPerfil(perfilUsuario, '/inventario/productos', 'crear') || tienePermisoEnPerfil(perfilUsuario, '/inventario/productos', 'actualizar');
 }
 function esAdministrador(rol) {
-  return rolNormalizado(rol) === 'administrador';
+  return tienePermisoEnPerfil(perfilUsuario, '/movimientos/ajustes', 'crear');
 }
 
 /**
@@ -73,8 +75,9 @@ export function renderizarDashboard(profile, onLogout) {
     <!-- PESTAÑAS DE NAVEGACIÓN -->
     <nav class="tabs-nav">
       <button class="tab-btn active" data-tab="inventario">📦 Inventario</button>
-      <button class="tab-btn" data-tab="movimientos">📋 Movimientos</button>
+      ${tienePermisoEnPerfil(profile, '/movimientos/entradas', 'leer') || tienePermisoEnPerfil(profile, '/movimientos/salidas', 'leer') ? '<button class="tab-btn" data-tab="movimientos">📋 Movimientos</button>' : ''}
       ${puedeEditar ? '<button class="tab-btn" data-tab="stock">🔄 Entrada/Salida</button>' : ''}
+      ${tienePermisoEnPerfil(profile, '/seguridad/roles', 'leer') ? '<button class="tab-btn" data-tab="seguridad">🔐 Roles y permisos</button>' : ''}
     </nav>
 
     <!-- CONTENIDO POR PESTAÑA -->
@@ -209,7 +212,17 @@ function actualizarOpcionesFormulario() {
 async function cargarPestaña(tab) {
   const contenedor = document.getElementById('tab-content');
 
-  if (tab === 'inventario') {
+  if (tab === 'seguridad') {
+    if (!tienePermisoEnPerfil(perfilUsuario, '/seguridad/roles', 'leer')) {
+      contenedor.innerHTML = '<p class="mensaje error">No tienes permiso para administrar roles.</p>';
+      return;
+    }
+    await renderizarSeguridad(contenedor);
+  } else if (tab === 'inventario') {
+    if (!tienePermisoEnPerfil(perfilUsuario, '/inventario/productos', 'leer')) {
+      contenedor.innerHTML = '<p class="mensaje error">No tienes permiso para consultar el inventario.</p>';
+      return;
+    }
     await renderizarTabInventario(contenedor);
   } else if (tab === 'movimientos') {
     await renderizarTabMovimientos(contenedor);
