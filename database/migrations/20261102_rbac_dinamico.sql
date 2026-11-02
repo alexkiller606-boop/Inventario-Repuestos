@@ -66,6 +66,15 @@ insert into public.r_modulo_rol(rol_id,modulo_id,habilitado)
 select r.id,m.id,true from public.rol r cross join public.modulo m
 on conflict (rol_id,modulo_id) do nothing;
 
+-- Preservar los permisos ya existentes cuando una vista cambia de módulo.
+insert into public.vistas_permiso(r_modulo_rol_id,vista_id,permiso_id,permitido)
+select mr_new.id,vp.vista_id,vp.permiso_id,vp.permitido
+from public.vistas_permiso vp
+join public.r_modulo_rol mr_old on mr_old.id=vp.r_modulo_rol_id
+join public.vistas vi on vi.id=vp.vista_id
+join public.r_modulo_rol mr_new on mr_new.rol_id=mr_old.rol_id and mr_new.modulo_id=vi.modulo_id
+on conflict (r_modulo_rol_id,vista_id,permiso_id) do nothing;
+
 insert into public.vistas_permiso(r_modulo_rol_id,vista_id,permiso_id,permitido)
 select mr.id,vi.id,pe.id,false from public.r_modulo_rol mr
 join public.vistas vi on vi.modulo_id=mr.modulo_id
