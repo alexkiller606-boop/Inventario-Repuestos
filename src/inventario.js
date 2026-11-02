@@ -381,33 +381,19 @@ export async function obtenerEstadisticas() {
  * @param {number|null} [usuarioId]
  * @returns {Promise<void>}
  */
-export async function registrarAuditoria(accion, tabla, registroId = null, datosAnteriores = null, datosNuevos = null, usuarioId = null) {
-  if (!supabase) return;
-
-  try {
-    let uid = usuarioId;
-    if (!uid) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: u } = await supabase
-          .from('usuario')
-          .select('id')
-          .eq('auth_user_id', user.id)
-          .maybeSingle();
-        uid = u?.id || null;
-      }
-    }
-
-    await supabase.from('auditoria_logs').insert({
-      usuario_id: uid,
-      accion,
-      tabla_afectada: tabla,
-      registro_id: registroId,
-      datos_anteriores: datosAnteriores,
-      datos_nuevos: datosNuevos,
-    });
-  } catch (e) {
-    console.warn('Error al registrar auditoría:', e.message);
+export async function registrarAuditoria(accion, tabla, registroId = null, datosAnteriores = null, datosNuevos = null) {
+  if (!supabase) return { error: 'Supabase no está configurado' };
+  const { error } = await supabase.rpc('registrar_auditoria', {
+    p_accion: accion,
+    p_tabla: tabla,
+    p_registro_id: registroId,
+    p_datos_anteriores: datosAnteriores,
+    p_datos_nuevos: datosNuevos,
+  });
+  if (error) {
+    console.warn('Error al registrar auditoría:', error.message);
+    return { error };
   }
+  return { error: null };
 }
 
