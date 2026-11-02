@@ -133,7 +133,7 @@ export async function renderizarSeguridad(contenedor) {
       const assignmentId = enlacePorModulo.get(m.id);
       const views = vistas.filter(v=>v.modulo_id===m.id);
       if (!views.length) return '';
-      return `<div class="seguridad-modulo"><h4>${escapeHtml(m.nombre_modulo)}</h4>${views.map(v => `
+      return `<div class="seguridad-modulo"><h4>${escapeHtml(m.nombre_modulo)} <label class="seguridad-modulo-toggle"><input type="checkbox" data-module-id="${assignmentId}" ${enlaces.find(x=>x.id===assignmentId)?.habilitado ? "checked" : ""}> Módulo habilitado</label></h4>${views.map(v => `
         <div class="seguridad-vista"><strong>${escapeHtml(v.nombre_vista)}</strong><span class="seguridad-ruta">${escapeHtml(v.ruta_acceso)}</span>
           <div class="seguridad-acciones">${permisos.map(p => {
             const row = rowByKey.get(`${assignmentId}:${v.id}:${p.id}`);
