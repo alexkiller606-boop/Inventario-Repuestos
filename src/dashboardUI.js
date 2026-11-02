@@ -238,7 +238,7 @@ async function cargarPestaña(tab) {
       contenedor.innerHTML = '<p class="mensaje error">No tienes permiso para registrar movimientos.</p>';
       return;
     }
-    await renderizarTabInventario(contenedor); // Misma vista, pero con foco en stock
+    await renderizarTabRegistroMovimiento(contenedor);
   }
 }
 
@@ -501,6 +501,149 @@ function manejarAccionTabla(e) {
   }
 }
 
+
+/* ══════════════════════════════════════════════
+   PESTAÑA: REGISTRAR ENTRADAS Y SALIDAS
+   ══════════════════════════════════════════════ */
+
+async function renderizarTabRegistroMovimiento(contenedor) {
+  const puedeEntrada = tienePermisoEnPerfil(perfilUsuario, '/movimientos/entradas', 'crear');
+  const puedeSalida = tienePermisoEnPerfil(perfilUsuario, '/movimientos/salidas', 'crear');
+  const puedeAjuste = tienePermisoEnPerfil(perfilUsuario, '/movimientos/ajustes', 'crear');
+  const { data: productos, error } = await obtenerProductos();
+  if (error) {
+    contenedor.innerHTML = `<div class="card"><p class="mensaje error">No se pudieron cargar los repuestos: ${escapeHtml(error)}</p></div>`;
+    return;
+  }
+  const opciones = (productos || []).map(p =>
+    `<option value="${p.id}" data-stock="${p.stock}" data-codigo="${escapeHtml(p.codigo)}" data-nombre="${escapeHtml(p.nombre)}">${escapeHtml(p.codigo)} — ${escapeHtml(p.nombre)} (Stock: ${p.stock})</option>`
+  ).join('');
+
+  contenedor.innerHTML = `
+    <section class="movement-intro">
+      <div><span class="eyebrow">CONTROL DE EXISTENCIAS</span><h2>Registrar movimiento</h2>
+      <p>Selecciona un repuesto existente y registra la mercancía que entra o sale. El stock se actualizará automáticamente.</p></div>
+      <div class="movement-shortcuts"><span>📥 Entrada suma unidades</span><span>📤 Salida descuenta unidades</span></div>
+    </section>
+    <div class="movement-layout">
+      <form id="form-registro-movimiento" class="card movement-form">
+        <div class="form-group">
+          <label for="mov-buscar-producto">Buscar repuesto</label>
+          <input id="mov-buscar-producto" type="search" placeholder="Escribe código o nombre para filtrar..." autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label for="mov-select-producto">Repuesto *</label>
+          <select id="mov-select-producto" required><option value="">Selecciona un repuesto...</option>${opciones}</select>
+        </div>
+        <div class="movement-stock" aria-live="polite">
+          <span>Existencia actual</span><strong id="mov-stock-actual-tab">—</strong><small id="mov-codigo-actual">Selecciona un producto</small>
+        </div>
+        <div class="form-group">
+          <label for="mov-tipo-tab">Tipo de movimiento *</label>
+          <select id="mov-tipo-tab" required>
+            <option value="">Selecciona...</option>
+            ${puedeEntrada ? '<option value="entrada">📥 Entrada de mercancía</option>' : ''}
+            ${puedeSalida ? '<option value="salida">📤 Salida de mercancía</option>' : ''}
+            ${puedeAjuste ? '<option value="ajuste">🔧 Ajuste de existencia</option>' : ''}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="mov-cantidad-tab" id="mov-cantidad-label">Cantidad *</label>
+          <input id="mov-cantidad-tab" type="number" min="1" step="1" placeholder="Ej. 5" required>
+          <div class="quantity-shortcuts" aria-label="Cantidades rápidas">
+            <button type="button" data-quantity="1">+1</button><button type="button" data-quantity="5">+5</button><button type="button" data-quantity="10">+10</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="mov-motivo-tab">Motivo o referencia</label>
+          <input id="mov-motivo-tab" type="text" maxlength="255" placeholder="Ej. Compra a proveedor, venta, devolución...">
+        </div>
+        <div class="movement-preview" id="mov-preview" aria-live="polite">El stock resultante aparecerá aquí al completar los datos.</div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-principal" id="btn-guardar-movimiento">Registrar movimiento</button>
+          <button type="reset" class="btn btn-cancelar">Limpiar</button>
+        </div>
+        <div id="mov-tab-mensaje" class="mensaje" role="status"></div>
+      </form>
+      <aside class="card movement-help">
+        <h3>Antes de registrar</h3>
+        <ul><li>Una entrada aumenta las unidades disponibles.</li><li>Una salida descuenta unidades y no permite stock negativo.</li><li>Un ajuste establece la existencia real contada; úsalo solo si tienes permiso.</li></ul>
+        <div class="movement-tip"><strong>Consejo</strong><p>Escribe el motivo para que el historial permita identificar por qué cambió la existencia.</p></div>
+        <button type="button" class="btn btn-cancelar" id="btn-ver-historial">Ver historial de movimientos →</button>
+      </aside>
+    </div>
+  `;
+
+  const form = document.getElementById('form-registro-movimiento');
+  const select = document.getElementById('mov-select-producto');
+  const search = document.getElementById('mov-buscar-producto');
+  const tipo = document.getElementById('mov-tipo-tab');
+  const cantidad = document.getElementById('mov-cantidad-tab');
+  const stockEl = document.getElementById('mov-stock-actual-tab');
+  const preview = document.getElementById('mov-preview');
+
+  const actualizarPreview = () => {
+    const opt = select.selectedOptions[0];
+    const stock = Number(opt?.dataset.stock);
+    const qty = Number(cantidad.value);
+    stockEl.textContent = opt?.value ? stock.toLocaleString('es-VE') + ' unidades' : '—';
+    document.getElementById('mov-codigo-actual').textContent = opt?.value ? opt.dataset.codigo + ' · ' + opt.dataset.nombre : 'Selecciona un producto';
+    if (!opt?.value || !tipo.value || !Number.isInteger(qty) || qty <= 0) {
+      preview.textContent = 'El stock resultante aparecerá aquí al completar los datos.';
+      preview.className = 'movement-preview';
+      return;
+    }
+    const nuevo = tipo.value === 'entrada' ? stock + qty : tipo.value === 'salida' ? stock - qty : qty;
+    preview.textContent = nuevo < 0 ? 'Stock insuficiente: no puedes dejar existencia negativa.' : `Existencia después del movimiento: ${nuevo} unidades`;
+    preview.className = 'movement-preview ' + (nuevo < 0 ? 'is-error' : 'is-ready');
+  };
+  select.addEventListener('change', actualizarPreview);
+  tipo.addEventListener('change', () => {
+    document.getElementById('mov-cantidad-label').textContent = tipo.value === 'ajuste' ? 'Nueva existencia total *' : 'Cantidad de unidades *';
+    actualizarPreview();
+  });
+  cantidad.addEventListener('input', actualizarPreview);
+  search.addEventListener('input', () => {
+    const q = search.value.toLocaleLowerCase();
+    [...select.options].forEach((opt, index) => {
+      if (!index) return;
+      opt.hidden = !opt.textContent.toLocaleLowerCase().includes(q);
+    });
+    const selected = select.selectedOptions[0];
+    if (selected?.hidden) select.value = '';
+    actualizarPreview();
+  });
+  contenedor.querySelectorAll('[data-quantity]').forEach(btn => btn.addEventListener('click', () => {
+    cantidad.value = (Number(cantidad.value) || 0) + Number(btn.dataset.quantity);
+    actualizarPreview();
+  }));
+  document.getElementById('btn-ver-historial').addEventListener('click', () => {
+    document.querySelector('[data-tab="movimientos"]')?.click();
+  });
+  form.addEventListener('reset', () => setTimeout(actualizarPreview, 0));
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const productId = Number(select.value);
+    const movementType = tipo.value;
+    const qty = Number(cantidad.value);
+    if (!productId || !movementType || !Number.isInteger(qty) || qty <= 0) return;
+    const submit = document.getElementById('btn-guardar-movimiento');
+    const msg = document.getElementById('mov-tab-mensaje');
+    submit.disabled = true;
+    submit.textContent = 'Registrando...';
+    const result = await registrarMovimiento(productId, movementType, qty, document.getElementById('mov-motivo-tab').value);
+    if (result.error) {
+      mostrarMensajeEnElemento(msg, result.error, 'error');
+    } else {
+      mostrarMensajeEnElemento(msg, `Movimiento guardado. Existencia actualizada: ${result.data.stock_nuevo} unidades.`, 'exito');
+      form.reset();
+      await cargarDatosIniciales();
+    }
+    submit.disabled = false;
+    submit.textContent = 'Registrar movimiento';
+  });
+  actualizarPreview();
+}
 
 /* ══════════════════════════════════════════════
    PESTAÑA: MOVIMIENTOS
