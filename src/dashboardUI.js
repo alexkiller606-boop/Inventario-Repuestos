@@ -652,66 +652,57 @@ async function renderizarTabRegistroMovimiento(contenedor) {
 async function renderizarTabMovimientos(contenedor) {
   contenedor.innerHTML = `
     <div class="card card-full">
-      <h2>📋 Historial de Movimientos</h2>
+      <div class="history-heading"><div><span class="eyebrow">TRAZABILIDAD</span><h2>Historial de movimientos</h2><p>Consulta cada cambio de existencia registrado en el sistema.</p></div>
+      <button type="button" id="btn-actualizar-historial" class="btn btn-cancelar">↻ Actualizar</button></div>
+      <div class="history-tools">
+        <input type="search" id="buscar-movimiento" class="buscador" placeholder="Buscar por código, producto, usuario o motivo...">
+        <select id="filtro-tipo-movimiento"><option value="">Todos los movimientos</option><option value="entrada">Entradas</option><option value="salida">Salidas</option><option value="ajuste">Ajustes</option></select>
+      </div>
       <div class="tabla-container">
         <table class="tabla">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Tipo</th>
-              <th>Producto</th>
-              <th>Cantidad</th>
-              <th>Stock Anterior</th>
-              <th>Stock Nuevo</th>
-              <th>Motivo</th>
-              <th>Usuario</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-movimientos">
-            <tr class="sin-datos"><td colspan="8">Cargando...</td></tr>
-          </tbody>
+          <thead><tr><th>Fecha</th><th>Tipo</th><th>Producto</th><th>Cantidad</th><th>Stock anterior</th><th>Stock nuevo</th><th>Motivo</th><th>Usuario</th></tr></thead>
+          <tbody id="tabla-movimientos"><tr class="sin-datos"><td colspan="8">Cargando...</td></tr></tbody>
         </table>
       </div>
+      <p class="history-count" id="contador-movimientos"></p>
     </div>
   `;
-
-  const { data, error } = await obtenerMovimientos();
-
   const tbody = document.getElementById('tabla-movimientos');
-
-  if (error) {
-    tbody.innerHTML = `
-      <tr class="sin-datos">
-        <td colspan="8">
-          <div style="padding: 1.5rem; text-align: center;">
-            <p style="font-weight: 600; margin-bottom: 0.5rem; color: #4a5568;">ℹ️ Módulo no disponible en la base de datos actual</p>
-            <p style="font-size: 0.9rem; color: #718096; margin: 0;">${escapeHtml(error)}</p>
-          </div>
-        </td>
-      </tr>
-    `;
-    return;
-  }
-
-  if (!data || data.length === 0) {
-    tbody.innerHTML = `<tr class="sin-datos"><td colspan="8">No hay movimientos registrados aún.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = data.map(m => `
-    <tr>
-      <td>${formatearFecha(m.created_at)}</td>
-      <td><span class="badge badge-${m.tipo}">${tipoEtiqueta(m.tipo)}</span></td>
-      <td><strong>${escapeHtml(m.producto_codigo)}</strong> — ${escapeHtml(m.producto_nombre)}</td>
-      <td>${m.cantidad}</td>
-      <td>${m.stock_anterior}</td>
-      <td>${m.stock_nuevo}</td>
-      <td>${escapeHtml(m.motivo || '—')}</td>
-      <td>${escapeHtml(m.usuario_nombre || '—')}</td>
-    </tr>
-  `).join('');
+  let movimientos = [];
+  const pintar = () => {
+    const q = document.getElementById('buscar-movimiento').value.trim().toLocaleLowerCase();
+    const tipo = document.getElementById('filtro-tipo-movimiento').value;
+    const filtrados = movimientos.filter(m => (!tipo || m.tipo === tipo) &&
+      [m.producto_codigo,m.producto_nombre,m.usuario_nombre,m.motivo,m.tipo].some(v => String(v || '').toLocaleLowerCase().includes(q)));
+    document.getElementById('contador-movimientos').textContent = `${filtrados.length} de ${movimientos.length} movimientos`;
+    if (!filtrados.length) {
+      tbody.innerHTML = `<tr class="sin-datos"><td colspan="8">${movimientos.length ? 'No hay resultados para esos filtros.' : 'Todavía no hay movimientos registrados.'}</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = filtrados.map(m => `
+      <tr>
+        <td>${formatearFecha(m.created_at)}</td>
+        <td><span class="badge badge-${m.tipo}">${tipoEtiqueta(m.tipo)}</span></td>
+        <td><strong>${escapeHtml(m.producto_codigo)}</strong> — ${escapeHtml(m.producto_nombre)}</td>
+        <td>${m.cantidad}</td><td>${m.stock_anterior}</td><td>${m.stock_nuevo}</td>
+        <td>${escapeHtml(m.motivo || '—')}</td><td>${escapeHtml(m.usuario_nombre || '—')}</td>
+      </tr>`).join('');
+  };
+  const cargar = async () => {
+    tbody.innerHTML = '<tr class="sin-datos"><td colspan="8">Cargando movimientos...</td></tr>';
+    const { data, error } = await obtenerMovimientos();
+    if (error) {
+      tbody.innerHTML = `<tr class="sin-datos"><td colspan="8"><span class="mensaje error">No se pudo consultar el historial: ${escapeHtml(error)}</span></td></tr>`;
+      return;
+    }
+    movimientos = data || [];
+    pintar();
+  };
+  document.getElementById('buscar-movimiento').addEventListener('input', pintar);
+  document.getElementById('filtro-tipo-movimiento').addEventListener('change', pintar);
+  document.getElementById('btn-actualizar-historial').addEventListener('click', cargar);
+  await cargar();
 }
-
 
 /* ══════════════════════════════════════════════
    RENDERIZADO DE TABLA DE PRODUCTOS
