@@ -114,7 +114,7 @@ export async function renderizarSeguridad(contenedor) {
     const id = Number(event.target.value);
     const out = document.getElementById('roles-usuario');
     if (!id) { out.textContent=''; return; }
-    const {data,error} = await supabase.from('r_usuario_rol').select('rol:rol_id(nombre_rol)').eq('usuario_id',id);
+    const {data,error} = await supabase.from('r_usuario_rol').select('rol:rol(nombre_rol)').eq('usuario_id',id);
     if (error) { out.textContent=error.message; return; }
     out.textContent = 'Roles actuales: '+((data||[]).map(x=>x.rol?.nombre_rol).filter(Boolean).join(', ') || 'Sin roles asignados');
   });
@@ -123,7 +123,7 @@ export async function renderizarSeguridad(contenedor) {
     const roleId = Number(event.target.value);
     const box = document.getElementById('matriz-permisos');
     if (!roleId) { box.innerHTML='<p>Selecciona un rol.</p>'; return; }
-    const {data: enlaces,error:e1} = await supabase.from('r_modulo_rol').select('id,modulo_id').eq('rol_id',roleId);
+    const {data: enlaces,error:e1} = await supabase.from('r_modulo_rol').select('id,modulo_id,habilitado').eq('rol_id',roleId);
     if (e1) { box.textContent=e1.message; return; }
     const {data: filas,error:e2} = await supabase.from('vistas_permiso').select('id,r_modulo_rol_id,vista_id,permiso_id,permitido');
     if (e2) { box.textContent=e2.message; return; }
@@ -141,6 +141,13 @@ export async function renderizarSeguridad(contenedor) {
           }).join('')}</div>
         </div>`).join('')}</div>`;
     }).join('') || '<p>No hay vistas asociadas a este rol.</p>';
+    box.querySelectorAll('[data-module-id]').forEach(input => input.addEventListener('change', async () => {
+      input.disabled = true;
+      const {error} = await supabase.from('r_modulo_rol').update({habilitado:input.checked}).eq('id',Number(input.dataset.moduleId));
+      input.disabled = false;
+      if (error) { input.checked=!input.checked; mensaje('No se pudo cambiar el módulo: '+error.message,true); }
+      else mensaje('Módulo actualizado.');
+    }));
     box.querySelectorAll('[data-permission-id]').forEach(input => input.addEventListener('change', async () => {
       input.disabled = true;
       const {error} = await supabase.from('vistas_permiso').update({permitido:input.checked}).eq('id',Number(input.dataset.permissionId));
