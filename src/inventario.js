@@ -297,33 +297,27 @@ export async function obtenerMarcas() {
    MOVIMIENTOS DE INVENTARIO
    ────────────────────────────────────────────── */
 
-/**
- * Informa el estado de movimientos de inventario.
- * La tabla 'movimientos_inventario' y la función RPC 'registrar_movimiento' no existen en la base de datos actual.
- * @param {number} productoId
- * @param {string} tipo
- * @param {number} cantidad
- * @param {string} [motivo]
- * @returns {Promise<{data: null, error: string}>}
- */
 export async function registrarMovimiento(productoId, tipo, cantidad, motivo = '') {
-  return {
-    data: null,
-    error: 'La funcionalidad de movimientos de inventario no está disponible en la base de datos actual (no existe la tabla movimientos_inventario ni la función RPC registrar_movimiento).',
-  };
+  if (!supabase) return { data: null, error: 'Supabase no está configurado' };
+  const { data, error } = await supabase.rpc('registrar_movimiento', {
+    p_producto_id: Number(productoId),
+    p_tipo: tipo,
+    p_cantidad: Number(cantidad),
+    p_motivo: motivo?.trim() || null,
+  });
+  if (error) return { data: null, error: error.message };
+  return { data, error: null };
 }
 
-/**
- * Informa el estado del historial de movimientos.
- * La vista 'v_movimientos_recientes' no existe en la base de datos actual.
- * @param {number} [limite=50]
- * @returns {Promise<{data: Array, error: string}>}
- */
-export async function obtenerMovimientos(limite = 50) {
-  return {
-    data: [],
-    error: 'El módulo de movimientos de inventario (v_movimientos_recientes) no existe en el esquema activo de la base de datos.',
-  };
+export async function obtenerMovimientos(limite = 100) {
+  if (!supabase) return { data: [], error: 'Supabase no está configurado' };
+  const { data, error } = await supabase
+    .from('v_movimientos_recientes')
+    .select('id,tipo,cantidad,stock_anterior,stock_nuevo,motivo,created_at,producto_codigo,producto_nombre,usuario_nombre')
+    .order('created_at', { ascending: false })
+    .limit(limite);
+  if (error) return { data: [], error: error.message };
+  return { data: data || [], error: null };
 }
 
 /* ──────────────────────────────────────────────
