@@ -904,3 +904,14 @@ body {
     padding: var(--espaciado-lg);
   }
 }
+
+
+/* Gestión dinámica de roles y permisos */
+.seguridad-panel { display: grid; gap: 1.25rem; }
+.seguridad-modulo { border: 1px solid #3b3b3b; border-radius: 10px; padding: 1rem; margin: 1rem 0; }
+.seguridad-modulo h4 { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin: 0 0 .75rem; }
+.seguridad-modulo-toggle, .seguridad-acciones label { display: inline-flex; align-items: center; gap: .4rem; font-size: .9rem; font-weight: 500; }
+.seguridad-vista { padding: .75rem 0; border-top: 1px solid #333; }
+.seguridad-ruta { display: block; color: #aaa; font-size: .8rem; margin-top: .2rem; }
+.seguridad-acciones { display: flex; flex-wrap: wrap; gap: .75rem 1rem; margin-top: .6rem; }
+.seguridad-acciones input, .seguridad-modulo-toggle input { accent-color: #f97316; }
