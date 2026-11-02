@@ -39,6 +39,21 @@ export async function renderizarSeguridad(contenedor) {
         <div id="seguridad-mensaje" class="mensaje" aria-live="polite"></div>
       </div>
       <div class="card">
+        <h3>Crear cuenta de usuario</h3>
+        <p>Se enviará una invitación al correo. Puedes asignarle varios roles desde el momento de crear la cuenta.</p>
+        <form id="form-nuevo-usuario" class="form-row">
+          <div class="form-group"><label for="nuevo-usuario-nombre">Nombre</label><input id="nuevo-usuario-nombre" required maxlength="100"></div>
+          <div class="form-group"><label for="nuevo-usuario-email">Correo electrónico</label><input id="nuevo-usuario-email" type="email" required></div>
+          <div class="form-group"><label for="nuevo-usuario-roles">Roles</label>
+            <select id="nuevo-usuario-roles" multiple required size="4">
+              ${roles.map(r => `<option value="${r.id}">${escapeHtml(r.nombre_rol)}</option>`).join('')}
+            </select>
+            <small>Mantén presionada Ctrl para elegir varios roles.</small>
+          </div>
+          <button class="btn btn-principal" type="submit">Crear y enviar invitación</button>
+        </form>
+      </div>
+      <div class="card">
         <h3>Asignar roles a un usuario</h3>
         <form id="form-asignar-rol" class="form-row">
           <div class="form-group"><label for="usuario-seguridad">Usuario</label>
@@ -94,6 +109,23 @@ export async function renderizarSeguridad(contenedor) {
       if (errorMatriz) return mensaje('Rol creado; falló la inicialización de permisos: '+errorMatriz.message,true);
     }
     mensaje('Rol creado. Todos sus permisos comienzan denegados.');
+    await renderizarSeguridad(contenedor);
+  });
+
+  document.getElementById('form-nuevo-usuario').addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = event.currentTarget.querySelector('button[type="submit"]');
+    button.disabled = true;
+    const nombre = document.getElementById('nuevo-usuario-nombre').value.trim();
+    const email = document.getElementById('nuevo-usuario-email').value.trim();
+    const role_ids = Array.from(document.getElementById('nuevo-usuario-roles').selectedOptions).map(o => Number(o.value));
+    const {data,error} = await supabase.functions.invoke('admin-create-user',{body:{nombre,email,role_ids}});
+    button.disabled = false;
+    if (error || data?.error) {
+      mensaje(data?.error || error.message || 'No se pudo crear el usuario.',true);
+      return;
+    }
+    mensaje(data.message || 'Invitación enviada.');
     await renderizarSeguridad(contenedor);
   });
 
