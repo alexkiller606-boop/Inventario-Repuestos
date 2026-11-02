@@ -66,7 +66,7 @@ export function renderizarDashboard(profile, onLogout) {
         <div class="header-user">
           <span class="user-badge" title="${escapeHtml(profile.rol_descripcion || profile.rol)}">
             ${iconoRol(profile.rol)} ${escapeHtml(profile.nombre)}
-            <small>(${escapeHtml(profile.rol)})</small>
+            <small>(${escapeHtml((profile.roles_nombres || [profile.rol]).join(', '))})</small>
           </span>
           <button id="btn-logout" class="btn btn-logout" title="Cerrar sesión">
             Salir ⏻
