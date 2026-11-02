@@ -40,6 +40,9 @@ function puedeEditarInventario(rol) {
 function esAdministrador(rol) {
   return tienePermisoEnPerfil(perfilUsuario, '/movimientos/ajustes', 'crear');
 }
+function puedeRegistrarMovimientos() {
+  return tienePermisoEnPerfil(perfilUsuario, '/movimientos/entradas', 'crear') || tienePermisoEnPerfil(perfilUsuario, '/movimientos/salidas', 'crear') || tienePermisoEnPerfil(perfilUsuario, '/movimientos/ajustes', 'crear');
+}
 
 /**
  * Renderiza el dashboard completo.
@@ -76,7 +79,7 @@ export function renderizarDashboard(profile, onLogout) {
     <nav class="tabs-nav">
       <button class="tab-btn active" data-tab="inventario">📦 Inventario</button>
       ${tienePermisoEnPerfil(profile, '/movimientos/entradas', 'leer') || tienePermisoEnPerfil(profile, '/movimientos/salidas', 'leer') ? '<button class="tab-btn" data-tab="movimientos">📋 Movimientos</button>' : ''}
-      ${puedeEditar ? '<button class="tab-btn" data-tab="stock">🔄 Entrada/Salida</button>' : ''}
+      ${puedeRegistrarMovimientos() ? '<button class="tab-btn" data-tab="stock">🔄 Entrada/Salida</button>' : ''}
       ${tienePermisoEnPerfil(profile, '/seguridad/roles', 'leer') ? '<button class="tab-btn" data-tab="seguridad">🔐 Roles y permisos</button>' : ''}
     </nav>
 
@@ -225,8 +228,16 @@ async function cargarPestaña(tab) {
     }
     await renderizarTabInventario(contenedor);
   } else if (tab === 'movimientos') {
+    if (!tienePermisoEnPerfil(perfilUsuario, '/movimientos/entradas', 'leer') && !tienePermisoEnPerfil(perfilUsuario, '/movimientos/salidas', 'leer')) {
+      contenedor.innerHTML = '<p class="mensaje error">No tienes permiso para consultar movimientos.</p>';
+      return;
+    }
     await renderizarTabMovimientos(contenedor);
   } else if (tab === 'stock') {
+    if (!puedeRegistrarMovimientos()) {
+      contenedor.innerHTML = '<p class="mensaje error">No tienes permiso para registrar movimientos.</p>';
+      return;
+    }
     await renderizarTabInventario(contenedor); // Misma vista, pero con foco en stock
   }
 }
