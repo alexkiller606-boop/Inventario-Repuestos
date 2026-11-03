@@ -32,13 +32,13 @@ export function renderizarPantallaConfiguracion() {
             <div class="config-item">
               <span class="config-var-name">VITE_SUPABASE_URL</span>
               <span class="badge ${status.hasUrl ? 'badge-ok' : 'badge-faltante'}">
-                ${status.hasUrl ? '✓ Configurado' : '✗ Falta configurar'}
+                ${status.hasUrl ? 'Configurado' : 'Pendiente'}
               </span>
             </div>
             <div class="config-item">
               <span class="config-var-name">VITE_SUPABASE_ANON_KEY</span>
               <span class="badge ${status.hasKey ? 'badge-ok' : 'badge-faltante'}">
-                ${status.hasKey ? '✓ Configurado' : '✗ Falta configurar'}
+                ${status.hasKey ? 'Configurado' : 'Pendiente'}
               </span>
             </div>
           </div>
@@ -55,7 +55,7 @@ export function renderizarPantallaConfiguracion() {
             </li>
             <li>
               <strong>Copia tus credenciales API:</strong> En el menú lateral izquierdo ve a
-              <strong>Project Settings</strong> (icono de engranaje) ➔ <strong>API</strong>.
+              <strong>Project Settings</strong> (icono de engranaje) › <strong>API</strong>.
             </li>
             <li>
               <strong>Edita el archivo <code>.env</code>:</strong> En la carpeta raíz del proyecto, abre el archivo <code>.env</code> y pega tu URL y tu clave anónima pública:
