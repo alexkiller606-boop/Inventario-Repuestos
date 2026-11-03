@@ -22,11 +22,11 @@ let cargandoDashboard = false;
  * Verifica si Supabase está configurado, si hay una sesión activa y enruta al componente correcto.
  */
 async function inicializarApp() {
-  console.log('🏍️ MotoRepuestos — Iniciando aplicación...');
+  console.log('<span class="brand-mark">MR</span> MotoRepuestos — Iniciando aplicación...');
 
   // Si Supabase todavía no está configurado, mostrar la pantalla clara de configuración
   if (!isSupabaseConfigured()) {
-    console.warn('⚠️ Supabase no está configurado. Mostrando pantalla de configuración requerida...');
+    console.warn('Supabase no está configurado. Mostrando pantalla de configuración requerida...');
     renderizarPantallaConfiguracion();
     return;
   }
@@ -42,7 +42,7 @@ async function inicializarApp() {
 
   // Escuchar cambios de autenticación (login/logout desde otras pestañas)
   onAuthStateChange(async (event, session) => {
-    console.log('🔄 Auth event:', event);
+    console.log('Auth event:', event);
 
     if (event === 'SIGNED_IN' && session) {
       await cargarDashboard();
@@ -82,11 +82,11 @@ async function cargarDashboard() {
       <div class="login-wrapper">
         <div class="login-card" style="max-width: 500px;">
           <div class="login-header">
-            <h1>🏍️ MotoRepuestos</h1>
+            <h1><span class="brand-mark">MR</span> MotoRepuestos</h1>
             <p>Sistema de Inventario — Papi Beto</p>
           </div>
           <div class="config-alerta" style="border-left: 4px solid #e53e3e; background: rgba(229, 62, 62, 0.08); padding: 1.25rem; border-radius: 8px; margin: 1.5rem 0; text-align: left;">
-            <h3 style="color: #e53e3e; margin-bottom: 0.5rem;">⚠️ Error al Cargar Perfil de Usuario</h3>
+            <h3 style="color: #e53e3e; margin-bottom: 0.5rem;">Error al cargar el perfil de usuario</h3>
             <p style="margin-bottom: 0.75rem; font-size: 0.95rem; word-break: break-word;">${escapeHtml(error || 'No se pudo obtener el perfil del usuario.')}</p>
             <p style="font-size: 0.85rem; color: #718096; margin: 0;">
               Tu sesión en Supabase Auth está activa, pero no se pudo consultar el registro correspondiente en la tabla <code>usuario</code> o su rol en <code>r_usuario_rol</code>.
@@ -94,7 +94,7 @@ async function cargarDashboard() {
           </div>
           <div style="display: flex; gap: 0.75rem; justify-content: center; margin-top: 1.5rem;">
             <button class="btn btn-principal" id="btn-reintentar-perfil">
-              🔄 Reintentar
+              Reintentar
             </button>
             <button class="btn btn-cancelar" id="btn-logout-error">
               Cerrar Sesión
@@ -119,7 +119,7 @@ async function cargarDashboard() {
     app.innerHTML = `
       <div class="login-wrapper">
         <div class="login-card">
-          <h2>🚫 Cuenta Desactivada</h2>
+          <h2>Cuenta desactivada</h2>
           <p>Tu cuenta ha sido desactivada en el sistema. Contacta al administrador.</p>
           <button class="btn btn-principal" id="btn-logout-inactive">Cerrar Sesión</button>
         </div>
@@ -132,7 +132,7 @@ async function cargarDashboard() {
     return;
   }
 
-  console.log(`✅ Sesión activa: ${profile.nombre} (${profile.rol})`);
+  console.log(`Sesión activa: ${profile.nombre} (${profile.rol})`);
 
   renderizarDashboard(profile, async () => {
     await logout();
