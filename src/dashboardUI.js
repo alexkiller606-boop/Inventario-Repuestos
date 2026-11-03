@@ -21,6 +21,27 @@ import {
 import { tienePermisoEnPerfil } from './auth.js';
 import { renderizarSeguridad } from './seguridadUI.js';
 
+
+function iconoUI(tipo, clase = '') {
+  const paths = {
+    motorcycle: '<path d="M5 17h2l3-6h4l3 6h2"/><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="m10 11-2-3H5m8 3 2-3h3"/>',
+    package: '<path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="M3 8v9l9 5 9-5V8M12 13v9"/>',
+    list: '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
+    refresh: '<path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.4-3"/>',
+    warning: '<path d="m12 3 10 18H2L12 3Z"/><path d="M12 9v5m0 3h.01"/>',
+    edit: '<path d="m15 5 4 4M4 20l4-.8L19 8a2.8 2.8 0 0 0-4-4L4 15l-.8 5Z"/>',
+    trash: '<path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/>',
+    entry: '<path d="M12 3v12m-5-5 5 5 5-5"/><path d="M4 19h16"/>',
+    exit: '<path d="M12 15V3m-5 5 5-5 5 5"/><path d="M4 19h16"/>',
+    wrench: '<path d="M14.7 6.3a5 5 0 0 0-6.4 6.4L3 18l3 3 5.3-5.3a5 5 0 0 0 6.4-6.4L14 12l-3-3 3.7-2.7Z"/>',
+    shield: '<path d="M12 3 20 6v5c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-3Z"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+    check: '<path d="m5 12 4 4L19 6"/>',
+    logout: '<path d="M10 17l5-5-5-5m5 5H3"/><path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/>'
+  };
+  return '<svg class="ui-icon ' + clase + '" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + (paths[tipo] || paths.package) + '</svg>';
+}
+
 // Estado de la aplicación
 let productosActuales = [];
 let categoriasLista = [];
@@ -60,7 +81,7 @@ export function renderizarDashboard(profile, onLogout) {
     <header class="header">
       <div class="header-top">
         <div>
-          <h1>🏍️ MotoRepuestos — Sistema de Inventario</h1>
+          <h1>${iconoUI('motorcycle', 'brand-icon')} MotoRepuestos — Sistema de Inventario</h1>
           <p>Gestión completa de repuestos para motocicletas</p>
         </div>
         <div class="header-user">
@@ -77,9 +98,9 @@ export function renderizarDashboard(profile, onLogout) {
 
     <!-- PESTAÑAS DE NAVEGACIÓN -->
     <nav class="tabs-nav">
-      <button class="tab-btn active" data-tab="inventario">📦 Inventario</button>
-      ${tienePermisoEnPerfil(profile, '/movimientos/entradas', 'leer') || tienePermisoEnPerfil(profile, '/movimientos/salidas', 'leer') ? '<button class="tab-btn" data-tab="movimientos">📋 Movimientos</button>' : ''}
-      ${puedeRegistrarMovimientos() ? '<button class="tab-btn" data-tab="stock">🔄 Entrada/Salida</button>' : ''}
+      <button class="tab-btn active" data-tab="inventario">${iconoUI('package')} Inventario</button>
+      ${tienePermisoEnPerfil(profile, '/movimientos/entradas', 'leer') || tienePermisoEnPerfil(profile, '/movimientos/salidas', 'leer') ? `<button class="tab-btn" data-tab="movimientos">${iconoUI('list')} Movimientos</button>` : ''}
+      ${puedeRegistrarMovimientos() ? '<button class="tab-btn" data-tab="stock">${iconoUI('refresh')} Entrada/Salida</button>' : ''}
       ${tienePermisoEnPerfil(profile, '/seguridad/roles', 'leer') ? '<button class="tab-btn" data-tab="seguridad"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 6v5c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-3Z"/><path d="m9 12 2 2 4-4"/></svg> Roles y permisos</button>' : ''}
     </nav>
 
@@ -91,7 +112,7 @@ export function renderizarDashboard(profile, onLogout) {
     <!-- MODAL DE CONFIRMACIÓN (reutilizado) -->
     <div id="modal-confirmar" class="modal">
       <div class="modal-contenido">
-        <h3>⚠️ Confirmar Eliminación</h3>
+        <h3>${iconoUI('warning')} Confirmar eliminación</h3>
         <p>¿Está seguro de que desea desactivar este repuesto? Puede reactivarlo después.</p>
         <div class="modal-botones">
           <button id="btn-confirmar-eliminar" class="btn btn-eliminar">Desactivar</button>
@@ -118,9 +139,9 @@ export function renderizarDashboard(profile, onLogout) {
             <label for="mov-tipo">Tipo de movimiento *</label>
             <select id="mov-tipo" required>
               <option value="">Seleccione...</option>
-              <option value="entrada">📥 Entrada</option>
-              <option value="salida">📤 Salida</option>
-              ${esAdmin ? '<option value="ajuste">🔧 Ajuste</option>' : ''}
+              <option value="entrada">Entrada</option>
+              <option value="salida">Salida</option>
+              ${esAdmin ? '<option value="ajuste">Ajuste</option>' : ''}
             </select>
           </div>
           <div class="form-group">
@@ -524,7 +545,7 @@ async function renderizarTabRegistroMovimiento(contenedor) {
     <section class="movement-intro">
       <div><span class="eyebrow">CONTROL DE EXISTENCIAS</span><h2>Registrar movimiento</h2>
       <p>Selecciona un repuesto existente y registra la mercancía que entra o sale. El stock se actualizará automáticamente.</p></div>
-      <div class="movement-shortcuts"><span>📥 Entrada suma unidades</span><span>📤 Salida descuenta unidades</span></div>
+      <div class="movement-shortcuts"><span>Entrada suma unidades</span><span>Salida descuenta unidades</span></div>
     </section>
     <div class="movement-layout">
       <form id="form-registro-movimiento" class="card movement-form">
@@ -543,9 +564,9 @@ async function renderizarTabRegistroMovimiento(contenedor) {
           <label for="mov-tipo-tab">Tipo de movimiento *</label>
           <select id="mov-tipo-tab" required>
             <option value="">Selecciona...</option>
-            ${puedeEntrada ? '<option value="entrada">📥 Entrada de mercancía</option>' : ''}
-            ${puedeSalida ? '<option value="salida">📤 Salida de mercancía</option>' : ''}
-            ${puedeAjuste ? '<option value="ajuste">🔧 Ajuste de existencia</option>' : ''}
+            ${puedeEntrada ? '<option value="entrada">Entrada de mercancía</option>' : ''}
+            ${puedeSalida ? '<option value="salida">Salida de mercancía</option>' : ''}
+            ${puedeAjuste ? '<option value="ajuste">Ajuste de existencia</option>' : ''}
           </select>
         </div>
         <div class="form-group">
@@ -734,7 +755,7 @@ function renderizarTabla(datos) {
       <td>
         <span class="${r.stock < r.stock_minimo ? 'stock-bajo' : 'stock-ok'}">
           ${r.stock}
-          ${r.stock < r.stock_minimo ? ' ⚠️' : ''}
+          ${r.stock < r.stock_minimo ? ' ${iconoUI('warning', 'stock-warning')}' : ''}
         </span>
         <small class="stock-min">min: ${r.stock_minimo}</small>
       </td>
@@ -742,15 +763,15 @@ function renderizarTabla(datos) {
       <td class="acciones">
         ${puedeEditar ? `
           <button class="btn btn-small btn-movimiento" data-id="${r.id}" data-accion="movimiento" title="Registrar entrada/salida">
-            🔄
+            ${iconoUI('refresh')}
           </button>
           <button class="btn btn-editar" data-id="${r.id}" data-accion="editar" title="Editar">
-            ✏️
+            ${iconoUI('edit')}
           </button>
         ` : ''}
         ${esAdmin ? `
           <button class="btn btn-eliminar" data-id="${r.id}" data-accion="eliminar" title="Desactivar">
-            🗑️
+            ${iconoUI('trash')}
           </button>
         ` : ''}
       </td>
@@ -892,7 +913,7 @@ function abrirModalMovimiento(producto) {
   // Vendedor solo puede salidas
   if (perfilUsuario.rol === 'vendedor') {
     const tipoSelect = document.getElementById('mov-tipo');
-    tipoSelect.innerHTML = '<option value="salida" selected>📤 Salida</option>';
+    tipoSelect.innerHTML = '<option value="salida" selected>Salida</option>';
   }
 
   document.getElementById('modal-movimiento')?.classList.add('activo');
@@ -923,7 +944,7 @@ async function manejarMovimiento(e) {
     return;
   }
 
-  mostrarMensajeEnElemento(msgEl, `✅ Movimiento registrado. Nuevo stock: ${data.stock_nuevo}`, 'exito');
+  mostrarMensajeEnElemento(msgEl, `${iconoUI('check')} Movimiento registrado. Nuevo stock: ${data.stock_nuevo}`, 'exito');
 
   setTimeout(() => {
     cerrarModalMovimiento();
@@ -959,12 +980,12 @@ function formatearFecha(iso) {
 
 function iconoRol(rol) {
   const rolLower = (rol || '').toLowerCase().trim();
-  const iconos = { administrador: '👑', almacenista: '📦', vendedor: '🛒', auditor: '📋', invitado: '👤' };
-  return iconos[rolLower] || '👤';
+  const iconos = { administrador: 'shield', almacenista: 'package', vendedor: 'user', auditor: 'list', invitado: 'user' };
+  return iconoUI(iconos[rolLower] || 'user', 'role-icon');
 }
 
 function tipoEtiqueta(tipo) {
-  const etiquetas = { entrada: '📥 Entrada', salida: '📤 Salida', ajuste: '🔧 Ajuste' };
+  const etiquetas = { entrada: 'Entrada', salida: 'Salida', ajuste: 'Ajuste' };
   return etiquetas[tipo] || tipo;
 }
 
