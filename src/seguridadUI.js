@@ -84,13 +84,24 @@ export async function renderizarSeguridad(contenedor) {
         <div id="roles-usuario" class="mensaje"></div>
       </div>
       <div class="card seguridad-seccion" data-security-panel="permisos">
-        <h3>${icono('key')} Configurar permisos</h3>
-        <div class="form-group"><label for="rol-permisos">Rol que deseas configurar</label>
-          <select id="rol-permisos"><option value="">Selecciona un rol</option>
-            ${roles.map(r => `<option value="${r.id}">${escapeHtml(r.nombre_rol)}</option>`).join('')}
-          </select>
+        <div class="permisos-intro">
+          <div><span class="eyebrow">ACCESO AL SISTEMA</span><h3>${icono('key')} Configurar permisos</h3>
+            <p>Elige un rol y define a qué secciones puede entrar y qué acciones puede realizar.</p></div>
+          <div class="permisos-help"><strong>Cómo funciona</strong><span>Los cambios se guardan al instante en Supabase.</span></div>
         </div>
-        <div class="seguridad-filtro">${icono('search')}<input id="buscar-permiso" type="search" placeholder="Filtrar módulos o pantallas..." aria-label="Buscar módulos o pantallas"></div><div id="matriz-permisos"><p>Selecciona un rol para cargar su matriz de permisos.</p></div>
+        <div class="permisos-toolbar">
+          <div class="form-group"><label for="rol-permisos">1. Selecciona el rol</label>
+            <select id="rol-permisos"><option value="">Elige un rol para comenzar</option>
+              ${roles.map(r => `<option value="${r.id}">${escapeHtml(r.nombre_rol)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group permisos-search-group"><label for="buscar-permiso">2. Busca una sección</label>
+            <div class="seguridad-filtro">${icono('search')}<input id="buscar-permiso" type="search" placeholder="Ej. inventario, ventas, usuarios..." aria-label="Buscar módulos o pantallas" disabled></div>
+          </div>
+        </div>
+        <div id="permisos-resumen" class="permisos-resumen" hidden></div>
+        <div id="matriz-permisos" class="matriz-permisos"><div class="permisos-empty"><span class="permisos-empty-icon">${icono('shield')}</span><strong>Configura el acceso de cada rol</strong><p>Selecciona un rol arriba para ver sus módulos y permisos.</p></div></div>
+        <div id="permisos-estado" class="permisos-estado" role="status" aria-live="polite">Aún no has seleccionado un rol.</div>
       </div>
     </section>
   `;
@@ -174,41 +185,176 @@ export async function renderizarSeguridad(contenedor) {
     out.textContent = 'Roles actuales: '+((data||[]).map(x=>x.rol?.nombre_rol).filter(Boolean).join(', ') || 'Sin roles asignados');
   });
 
-  document.getElementById('rol-permisos').addEventListener('change', async event => {
+  const selectorRol = document.getElementById('rol-permisos');
+  const buscadorPermisos = document.getElementById('buscar-permiso');
+  const resumenPermisos = document.getElementById('permisos-resumen');
+  const estadoPermisos = document.getElementById('permisos-estado');
+  const estadoPermiso = (texto, error=false) => {
+    estadoPermisos.textContent = texto;
+    estadoPermisos.classList.toggle('error', error);
+    estadoPermisos.classList.toggle('exito', !error);
+  };
+  const etiquetaPermiso = nombre => ({
+    crear: 'Crear registros', leer: 'Consultar información', actualizar: 'Modificar registros',
+    eliminar: 'Eliminar registros', exportar: 'Exportar información',
+    importar: 'Importar información', anular: 'Anular operaciones'
+  }[String(nombre).toLowerCase()] || nombre);
+  const descripcionPermiso = nombre => ({
+    crear: 'Permite registrar nuevos datos.',
+    leer: 'Permite consultar y visualizar información.',
+    actualizar: 'Permite editar información existente.',
+    eliminar: 'Permite eliminar o desactivar registros.',
+    exportar: 'Permite descargar información.',
+    importar: 'Permite cargar información desde archivos.',
+    anular: 'Permite anular operaciones registradas.'
+  }[String(nombre).toLowerCase()] || 'Permite realizar esta acción en la pantalla.');
+  
+  selectorRol.addEventListener('change', async event => {
     const roleId = Number(event.target.value);
     const box = document.getElementById('matriz-permisos');
-    if (!roleId) { box.innerHTML='<p>Selecciona un rol.</p>'; return; }
-    const {data: enlaces,error:e1} = await supabase.from('r_modulo_rol').select('id,modulo_id,habilitado').eq('rol_id',roleId);
-    if (e1) { box.textContent=e1.message; return; }
-    const {data: filas,error:e2} = await supabase.from('vistas_permiso').select('id,r_modulo_rol_id,vista_id,permiso_id,permitido');
-    if (e2) { box.textContent=e2.message; return; }
-    const enlacePorModulo = new Map((enlaces||[]).map(x=>[x.modulo_id,x.id]));
+    resumenPermisos.hidden = true;
+    buscadorPermisos.disabled = !roleId;
+    buscadorPermisos.value = '';
+    if (!roleId) {
+      box.innerHTML = '<div class="permisos-empty"><strong>Configura el acceso de cada rol</strong><p>Selecciona un rol para ver sus módulos y permisos.</p></div>';
+      estadoPermiso('Aún no has seleccionado un rol.');
+      return;
+    }
+    box.innerHTML = '<div class="permisos-empty"><strong>Cargando permisos...</strong><p>Estamos consultando la configuración del rol.</p></div>';
+    estadoPermiso('Consultando permisos del rol...');
+    const [{data: enlaces,error:e1},{data: filas,error:e2}] = await Promise.all([
+      supabase.from('r_modulo_rol').select('id,modulo_id,habilitado').eq('rol_id',roleId),
+      supabase.from('vistas_permiso').select('id,r_modulo_rol_id,vista_id,permiso_id,permitido')
+    ]);
+    if (e1 || e2) {
+      box.textContent = 'No se pudieron cargar los permisos: ' + (e1?.message || e2?.message);
+      estadoPermiso('No se pudo cargar la configuración.', true);
+      return;
+    }
+    const enlacePorModulo = new Map((enlaces||[]).map(x=>[x.modulo_id,x]));
     const rowByKey = new Map((filas||[]).map(x=>[`${x.r_modulo_rol_id}:${x.vista_id}:${x.permiso_id}`,x]));
-    box.innerHTML = modulos.map(m => {
-      const assignmentId = enlacePorModulo.get(m.id);
+    let totalPermitidos = (filas||[]).filter(row => {
+      const relation = (enlaces||[]).find(link => link.id === row.r_modulo_rol_id);
+      return relation && relation.habilitado && row.permitido;
+    }).length;
+    const totalAsignables = modulos.reduce((sum,m) => {
+      const count = vistas.filter(v=>v.modulo_id===m.id).length * permisos.length;
+      return sum + (enlacePorModulo.has(m.id) ? count : 0);
+    },0);
+    resumenPermisos.hidden = false;
+    resumenPermisos.innerHTML = `
+      <article><strong>${enlaces?.filter(x=>x.habilitado).length || 0}</strong><span>Módulos habilitados</span></article>
+      <article><strong>${totalPermitidos}</strong><span>Permisos concedidos</span></article>
+      <article><strong>${Math.max(0,totalAsignables-totalPermitidos)}</strong><span>Permisos no concedidos</span></article>`;
+    const iconoEstado = habilitado => habilitado
+      ? '<span class="permiso-status activo">Habilitado</span>'
+      : '<span class="permiso-status inactivo">Deshabilitado</span>';
+    box.innerHTML = modulos.map((m,index) => {
+      const enlace = enlacePorModulo.get(m.id);
       const views = vistas.filter(v=>v.modulo_id===m.id);
       if (!views.length) return '';
-      return `<div class="seguridad-modulo"><h4>${escapeHtml(m.nombre_modulo)} <label class="seguridad-modulo-toggle"><input type="checkbox" data-module-id="${assignmentId}" ${enlaces.find(x=>x.id===assignmentId)?.habilitado ? "checked" : ""}> Módulo habilitado</label></h4>${views.map(v => `
-        <div class="seguridad-vista"><strong>${escapeHtml(v.nombre_vista)}</strong><span class="seguridad-ruta">${escapeHtml(v.ruta_acceso)}</span>
-          <div class="seguridad-acciones">${permisos.map(p => {
-            const row = rowByKey.get(`${assignmentId}:${v.id}:${p.id}`);
-            return row ? `<label><input type="checkbox" data-permission-id="${row.id}" ${row.permitido?'checked':''}> ${escapeHtml(p.nombre_permiso)}</label>` : '';
-          }).join('')}</div>
-        </div>`).join('')}</div>`;
-    }).join('') || '<p>No hay vistas asociadas a este rol.</p>';
+      if (!enlace) return `<article class="permiso-modulo permiso-sin-enlace"><div><strong>${escapeHtml(m.nombre_modulo)}</strong><p>Este rol aún no tiene una asignación para este módulo.</p></div></article>`;
+      const activeCount = views.reduce((sum,v) => sum + permisos.filter(p => rowByKey.get(`${enlace.id}:${v.id}:${p.id}`)?.permitido).length,0);
+      return `
+        <details class="permiso-modulo" data-permiso-modulo open="${index===0 ? 'open' : ''}">
+          <summary class="permiso-modulo-cabecera">
+            <span class="permiso-modulo-identidad"><span class="permiso-modulo-icon">${icono('key')}</span><span><strong>${escapeHtml(m.nombre_modulo)}</strong><small>${views.length} pantalla(s) · <span data-module-count="${m.id}">${activeCount}</span> permisos activos</small></span></span>
+            <span class="permiso-modulo-controles"><span data-module-status="${m.id}">${iconoEstado(enlace.habilitado)}</span><label class="switch-permiso" title="Habilitar o deshabilitar este módulo"><input type="checkbox" data-module-id="${enlace.id}" ${enlace.habilitado?'checked':''}><span></span></label></span>
+          </summary>
+          <div class="permiso-modulo-cuerpo">
+            ${views.map(v => {
+              const rows = permisos.map(p => ({p,row:rowByKey.get(`${enlace.id}:${v.id}:${p.id}`)})).filter(x=>x.row);
+              const enabled = rows.filter(x=>x.row.permitido).length;
+              return `
+                <section class="permiso-pantalla" data-permiso-pantalla>
+                  <div class="permiso-pantalla-cabecera"><div><strong>${escapeHtml(v.nombre_vista)}</strong><small>${escapeHtml(v.ruta_acceso)}</small></div>
+                    <button type="button" class="btn-texto" data-toggle-view="${v.id}" data-link-id="${enlace.id}" title="Activar o quitar todos los permisos de esta pantalla">${enabled===rows.length && rows.length ? 'Quitar todos' : 'Permitir todos'}</button>
+                  </div>
+                  <div class="permiso-opciones">
+                    ${rows.map(({p,row}) => `
+                      <label class="permiso-opcion ${row.permitido?'seleccionado':''}" title="${escapeHtml(descripcionPermiso(p.nombre_permiso))}">
+                        <input type="checkbox" data-permission-id="${row.id}" data-module="${m.id}" data-view="${v.id}" ${row.permitido?'checked':''}>
+                        <span class="permiso-check"></span><span><strong>${escapeHtml(etiquetaPermiso(p.nombre_permiso))}</strong><small>${escapeHtml(descripcionPermiso(p.nombre_permiso))}</small></span>
+                      </label>`).join('')}
+                  </div>
+                </section>`;
+            }).join('')}
+          </div>
+        </details>`;
+    }).join('') || '<div class="permisos-empty"><strong>No hay pantallas configuradas</strong><p>Este rol no tiene vistas asociadas.</p></div>';
+    estadoPermiso('Los permisos se guardan automáticamente al cambiar una opción.');
+    
+    const actualizarResumen = () => {
+      const checks = [...box.querySelectorAll('[data-permission-id]')];
+      totalPermitidos = checks.filter(input => input.checked).length;
+      resumenPermisos.querySelector('article:nth-child(2) strong').textContent = totalPermitidos;
+      resumenPermisos.querySelector('article:nth-child(3) strong').textContent = Math.max(0,totalAsignables-totalPermitidos);
+      modulos.forEach(m => {
+        const count = box.querySelectorAll(`[data-module="${m.id}"]:checked`).length;
+        const node = box.querySelector(`[data-module-count="${m.id}"]`);
+        if (node) node.textContent = count;
+      });
+    };
+    const guardarPermiso = async input => {
+      const nuevoValor = input.checked;
+      const anterior = !nuevoValor;
+      input.disabled = true;
+      const {error} = await supabase.from('vistas_permiso').update({permitido:nuevoValor}).eq('id',Number(input.dataset.permissionId));
+      input.disabled = false;
+      if (error) {
+        input.checked = anterior;
+        input.closest('.permiso-opcion')?.classList.toggle('seleccionado',anterior);
+        estadoPermiso('No se pudo guardar el permiso: '+error.message,true);
+      } else {
+        input.closest('.permiso-opcion')?.classList.toggle('seleccionado',nuevoValor);
+        estadoPermiso('Permiso guardado correctamente.');
+      }
+      actualizarResumen();
+    };
     box.querySelectorAll('[data-module-id]').forEach(input => input.addEventListener('change', async () => {
+      const valor = input.checked;
       input.disabled = true;
-      const {error} = await supabase.from('r_modulo_rol').update({habilitado:input.checked}).eq('id',Number(input.dataset.moduleId));
+      const {error} = await supabase.from('r_modulo_rol').update({habilitado:valor}).eq('id',Number(input.dataset.moduleId));
       input.disabled = false;
-      if (error) { input.checked=!input.checked; mensaje('No se pudo cambiar el módulo: '+error.message,true); }
-      else mensaje('Módulo actualizado.');
+      if (error) {
+        input.checked = !valor;
+        estadoPermiso('No se pudo cambiar el módulo: '+error.message,true);
+      } else {
+        const status = box.querySelector(`[data-module-status="${enlacePorModulo.get(Number(modulos.find(m=>enlacePorModulo.get(m.id)?.id===Number(input.dataset.moduleId))?.id)?.modulo_id)}"]`);
+        if (status) status.innerHTML = iconoEstado(valor);
+        estadoPermiso(valor ? 'Módulo habilitado.' : 'Módulo deshabilitado. Sus permisos se conservan, pero no estarán disponibles mientras permanezca apagado.');
+        const index = [...box.querySelectorAll('[data-module-id]')].indexOf(input);
+        const moduleId = modulos.filter(m=>enlacePorModulo.has(m.id))[index]?.id;
+        const node = box.querySelector(`[data-module-status="${moduleId}"]`);
+        if (node) node.innerHTML = iconoEstado(valor);
+        actualizarResumen();
+      }
     }));
-    box.querySelectorAll('[data-permission-id]').forEach(input => input.addEventListener('change', async () => {
-      input.disabled = true;
-      const {error} = await supabase.from('vistas_permiso').update({permitido:input.checked}).eq('id',Number(input.dataset.permissionId));
-      input.disabled = false;
-      if (error) { input.checked=!input.checked; mensaje('No se pudo guardar el permiso: '+error.message,true); }
-      else mensaje('Permiso actualizado.');
+    box.querySelectorAll('[data-permission-id]').forEach(input => input.addEventListener('change', () => guardarPermiso(input)));
+    box.querySelectorAll('[data-toggle-view]').forEach(button => button.addEventListener('click', async () => {
+      const viewId = Number(button.dataset.toggleView);
+      const linkId = Number(button.dataset.linkId);
+      const inputs = [...box.querySelectorAll(`[data-view="${viewId}"]`)];
+      const shouldEnable = inputs.some(input=>!input.checked);
+      const previous = inputs.map(input=>input.checked);
+      inputs.forEach(input => { input.checked=shouldEnable; input.closest('.permiso-opcion')?.classList.toggle('seleccionado',shouldEnable); });
+      button.disabled = true;
+      const results = await Promise.all(inputs.map(input => supabase.from('vistas_permiso').update({permitido:shouldEnable}).eq('id',Number(input.dataset.permissionId))));
+      button.disabled = false;
+      const failed = results.find(result=>result.error);
+      if (failed) {
+        inputs.forEach((input,i) => { input.checked=previous[i]; input.closest('.permiso-opcion')?.classList.toggle('seleccionado',previous[i]); });
+        estadoPermiso('No se pudieron guardar todos los permisos: '+failed.error.message,true);
+      } else estadoPermiso(shouldEnable ? 'Se habilitaron los permisos de esta pantalla.' : 'Se quitaron los permisos de esta pantalla.');
+      button.textContent = shouldEnable ? 'Quitar todos' : 'Permitir todos';
+      actualizarResumen();
     }));
+  });
+  buscadorPermisos.addEventListener('input', () => {
+    const query = buscadorPermisos.value.trim().toLocaleLowerCase('es');
+    box.querySelectorAll('.permiso-modulo').forEach(card => {
+      card.hidden = query && !card.textContent.toLocaleLowerCase('es').includes(query);
+      if (query && !card.hidden) card.open = true;
+    });
   });
 }
