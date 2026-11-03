@@ -17,12 +17,12 @@ export function renderizarPantallaConfiguracion() {
     <div class="login-wrapper">
       <div class="config-card">
         <div class="login-header">
-          <h1>🏍️ MotoRepuestos</h1>
+          <h1><span class="brand-mark">MR</span> MotoRepuestos</h1>
           <p>Sistema de Inventario — Papi Beto</p>
         </div>
 
         <div class="config-alerta">
-          <h2>⚠️ Configuración de Supabase Pendiente</h2>
+          <h2>Configuración de Supabase pendiente</h2>
           <p>
             La aplicación no puede conectarse a la base de datos porque aún no se han configurado
             las credenciales en el archivo <code>.env</code>.
@@ -69,12 +69,12 @@ VITE_SUPABASE_ANON_KEY=tu-clave-anon-aqui</code></pre>
         </div>
 
         <div class="config-nota">
-          🔒 <strong>Seguridad:</strong> Usa únicamente la clave <code>anon</code> (pública). Nunca agregues la clave <code>service_role</code> en el frontend.
+          <span class="ui-icon-lock" aria-hidden="true"></span> <strong>Seguridad:</strong> Usa únicamente la clave <code>anon</code> (pública). Nunca agregues la clave <code>service_role</code> en el frontend.
         </div>
 
         <div class="config-acciones">
           <button id="btn-reintentar" class="btn btn-principal">
-            🔄 Recargar y verificar conexión
+            Recargar y verificar conexión
           </button>
         </div>
 
@@ -110,7 +110,7 @@ export function renderizarLogin(onLoginSuccess) {
     <div class="login-wrapper">
       <div class="login-card">
         <div class="login-header">
-          <h1>🏍️ MotoRepuestos</h1>
+          <h1><span class="brand-mark">MR</span> MotoRepuestos</h1>
           <p>Sistema de Inventario — Papi Beto</p>
         </div>
 
@@ -183,7 +183,7 @@ export function renderizarLogin(onLoginSuccess) {
       return;
     }
 
-    mostrarMensajeLogin(mensaje, '✅ Acceso concedido. Cargando...', 'exito');
+    mostrarMensajeLogin(mensaje, 'Acceso concedido. Cargando...', 'exito');
 
     // Pequeña pausa para que el usuario vea el mensaje
     setTimeout(() => {
