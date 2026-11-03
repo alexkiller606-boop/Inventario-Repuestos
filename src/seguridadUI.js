@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient.js';
 
 const acciones = ['crear','leer','actualizar','eliminar','exportar','importar','anular'];
+const icono = (nombre) => {"shield":"<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 3 20 6v5c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-3Z\"/><path d=\"m9 12 2 2 4-4\"/></svg>","users":"<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M16 20v-1.5a4.5 4.5 0 0 0-4.5-4.5h-3A4.5 4.5 0 0 0 4 18.5V20\"/><circle cx=\"10\" cy=\"7\" r=\"3.5\"/><path d=\"M17 11a3.5 3.5 0 0 0 0-7M20 20v-1.5a4.5 4.5 0 0 0-3-4.25\"/></svg>","key":"<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"15\" r=\"4\"/><path d=\"m11 12 9-9m-3 3 3 3m-6 0 3 3\"/></svg>","plus":"<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg>","search":"<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"10.8\" cy=\"10.8\" r=\"6.8\"/><path d=\"m16 16 5 5\"/></svg>"}[nombre] || '';
 const escapeHtml = (value='') => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 export async function renderizarSeguridad(contenedor) {
@@ -27,10 +28,21 @@ export async function renderizarSeguridad(contenedor) {
 
   contenedor.innerHTML = `
     <section class="panel seguridad-panel">
-      <h2>Roles y permisos</h2>
-      <p>Crea roles personalizados, asigna varios roles a cada usuario y define permisos por pantalla y acción.</p>
-      <div class="card">
-        <h3>Crear un rol</h3>
+      <header class="seguridad-header">
+        <div><span class="eyebrow">ADMINISTRACIÓN DEL SISTEMA</span><h2>${icono('shield')} Roles y permisos</h2><p>Controla quién puede acceder a cada módulo y qué acciones puede realizar.</p></div>
+      </header>
+      <div class="seguridad-resumen">
+        <article><span class="seguridad-resumen-icon">${icono('shield')}</span><div><strong>${roles.length}</strong><small>Roles registrados</small></div></article>
+        <article><span class="seguridad-resumen-icon">${icono('users')}</span><div><strong>${usuarios.length}</strong><small>Usuarios registrados</small></div></article>
+        <article><span class="seguridad-resumen-icon">${icono('key')}</span><div><strong>${permisos.length}</strong><small>Tipos de permiso</small></div></article>
+      </div>
+      <nav class="seguridad-nav" aria-label="Secciones de seguridad">
+        <button type="button" class="seguridad-nav-btn active" data-security-tab="roles">${icono('shield')} Roles</button>
+        <button type="button" class="seguridad-nav-btn" data-security-tab="usuarios">${icono('users')} Usuarios</button>
+        <button type="button" class="seguridad-nav-btn" data-security-tab="permisos">${icono('key')} Permisos</button>
+      </nav>
+      <div class="card seguridad-seccion active" data-security-panel="roles">
+        <h3>${icono('plus')} Crear un rol</h3>
         <form id="form-nuevo-rol" class="form-row">
           <div class="form-group"><label for="nuevo-rol-nombre">Nombre</label><input id="nuevo-rol-nombre" required maxlength="60" placeholder="Ej. Supervisor"></div>
           <div class="form-group"><label for="nuevo-rol-descripcion">Descripción</label><input id="nuevo-rol-descripcion" maxlength="180" placeholder="Responsabilidades del rol"></div>
@@ -38,8 +50,8 @@ export async function renderizarSeguridad(contenedor) {
         </form>
         <div id="seguridad-mensaje" class="mensaje" aria-live="polite"></div>
       </div>
-      <div class="card">
-        <h3>Crear cuenta de usuario</h3>
+      <div class="card seguridad-seccion" data-security-panel="usuarios">
+        <h3>${icono('users')} Crear cuenta de usuario</h3>
         <p>Se enviará una invitación al correo. Puedes asignarle varios roles desde el momento de crear la cuenta.</p>
         <form id="form-nuevo-usuario" class="form-row">
           <div class="form-group"><label for="nuevo-usuario-nombre">Nombre</label><input id="nuevo-usuario-nombre" required maxlength="100"></div>
@@ -53,8 +65,8 @@ export async function renderizarSeguridad(contenedor) {
           <button class="btn btn-principal" type="submit">Crear y enviar invitación</button>
         </form>
       </div>
-      <div class="card">
-        <h3>Asignar roles a un usuario</h3>
+      <div class="card seguridad-seccion" data-security-panel="usuarios">
+        <h3>${icono('shield')} Asignar roles a un usuario</h3>
         <form id="form-asignar-rol" class="form-row">
           <div class="form-group"><label for="usuario-seguridad">Usuario</label>
             <select id="usuario-seguridad" required>
@@ -71,17 +83,28 @@ export async function renderizarSeguridad(contenedor) {
         </form>
         <div id="roles-usuario" class="mensaje"></div>
       </div>
-      <div class="card">
-        <h3>Configurar permisos</h3>
+      <div class="card seguridad-seccion" data-security-panel="permisos">
+        <h3>${icono('key')} Configurar permisos</h3>
         <div class="form-group"><label for="rol-permisos">Rol que deseas configurar</label>
           <select id="rol-permisos"><option value="">Selecciona un rol</option>
             ${roles.map(r => `<option value="${r.id}">${escapeHtml(r.nombre_rol)}</option>`).join('')}
           </select>
         </div>
-        <div id="matriz-permisos"><p>Selecciona un rol para cargar su matriz de permisos.</p></div>
+        <div class="seguridad-filtro">${icono('search')}<input id="buscar-permiso" type="search" placeholder="Filtrar módulos o pantallas..." aria-label="Buscar módulos o pantallas"></div><div id="matriz-permisos"><p>Selecciona un rol para cargar su matriz de permisos.</p></div>
       </div>
     </section>
   `;
+
+  // Navegación entre apartados sin recargar los datos.
+  const cambiarSeccion = (nombre) => {
+    contenedor.querySelectorAll('[data-security-tab]').forEach(b => b.classList.toggle('active', b.dataset.securityTab === nombre));
+    contenedor.querySelectorAll('[data-security-panel]').forEach(p => p.classList.toggle('active', p.dataset.securityPanel === nombre));
+  };
+  contenedor.querySelectorAll('[data-security-tab]').forEach(b => b.addEventListener('click', () => cambiarSeccion(b.dataset.securityTab)));
+  document.getElementById('buscar-permiso')?.addEventListener('input', e => {
+    const q = e.target.value.toLocaleLowerCase('es');
+    contenedor.querySelectorAll('.seguridad-modulo').forEach(card => { card.hidden = !card.textContent.toLocaleLowerCase('es').includes(q); });
+  });
 
   const mensaje = (text, isError=false) => {
     const el = document.getElementById('seguridad-mensaje');
