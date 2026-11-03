@@ -90,7 +90,7 @@ export function renderizarDashboard(profile, onLogout) {
             <small>(${escapeHtml((profile.roles_nombres || [profile.rol]).join(', '))})</small>
           </span>
           <button id="btn-logout" class="btn btn-logout" title="Cerrar sesión">
-            Salir ⏻
+            ${iconoUI('logout')} Salir
           </button>
         </div>
       </div>
@@ -275,19 +275,19 @@ async function renderizarTabInventario(contenedor) {
     <!-- ESTADÍSTICAS RÁPIDAS -->
     <section class="stats">
       <div class="stat-card">
-        <h3>Total Repuestos</h3>
+        <h3>${iconoUI('package')} Total de repuestos</h3>
         <p id="stat-total">—</p>
       </div>
       <div class="stat-card">
-        <h3>Valor del Inventario</h3>
+        <h3>${iconoUI('list')} Valor del inventario</h3>
         <p id="stat-valor">—</p>
       </div>
       <div class="stat-card stat-card-alerta">
-        <h3>Stock Bajo</h3>
+        <h3>${iconoUI('warning')} Stock bajo</h3>
         <p id="stat-bajo">—</p>
       </div>
       <div class="stat-card">
-        <h3>Marcas</h3>
+        <h3>${iconoUI('package')} Marcas</h3>
         <p id="stat-marcas">—</p>
       </div>
     </section>
@@ -297,7 +297,7 @@ async function renderizarTabInventario(contenedor) {
       ${puedeEditar ? `
       <!-- FORMULARIO DE REGISTRO -->
       <aside class="card">
-        <h2 id="titulo-form">Agregar Repuesto</h2>
+        <h2 id="titulo-form">${iconoUI('plus')} Agregar repuesto</h2>
         <form id="form-repuesto">
           <div class="form-group">
             <label for="codigo">Código *</label>
@@ -348,7 +348,7 @@ async function renderizarTabInventario(contenedor) {
 
           <div id="form-buttons">
             <button type="submit" class="btn btn-principal" id="btn-guardar">
-              + Agregar Repuesto
+              ${iconoUI('plus')} Agregar repuesto
             </button>
           </div>
           <div class="form-actions" id="edit-buttons" style="display: none;">
@@ -363,7 +363,7 @@ async function renderizarTabInventario(contenedor) {
 
       <!-- TABLA DE REPUESTOS -->
       <main class="card ${!puedeEditar ? 'card-full' : ''}">
-        <h2>Lista de Repuestos</h2>
+        <h2>${iconoUI('list')} Lista de repuestos</h2>
         <div class="buscador-container">
           <input type="text" id="buscador" class="buscador" placeholder="Buscar por código o nombre..." />
         </div>
@@ -674,7 +674,7 @@ async function renderizarTabRegistroMovimiento(contenedor) {
 async function renderizarTabMovimientos(contenedor) {
   contenedor.innerHTML = `
     <div class="card card-full">
-      <div class="history-heading"><div><span class="eyebrow">TRAZABILIDAD</span><h2>Historial de movimientos</h2><p>Consulta cada cambio de existencia registrado en el sistema.</p></div>
+      <div class="history-heading"><div><span class="eyebrow">TRAZABILIDAD</span><h2>${iconoUI('list')} Historial de movimientos</h2><p>Consulta cada cambio de existencia registrado en el sistema.</p></div>
       <button type="button" id="btn-actualizar-historial" class="btn btn-cancelar">↻ Actualizar</button></div>
       <div class="history-tools">
         <input type="search" id="buscar-movimiento" class="buscador" placeholder="Buscar por código, producto, usuario o motivo...">
