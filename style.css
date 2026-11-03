@@ -1193,3 +1193,39 @@ input::placeholder, textarea::placeholder { color: #737c88; }
  .history-tools { grid-template-columns:1fr; }
  .movement-stock small { width:100%; margin-left:0; }
 }
+
+/* Gestión de roles y permisos: navegación y controles */
+.seguridad-panel { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.seguridad-header,.seguridad-resumen,.seguridad-nav,.seguridad-panel > .mensaje { grid-column:1/-1; }
+.seguridad-header h2 { display:flex; align-items:center; gap:10px; margin:0 0 8px; font-size:clamp(1.4rem,3vw,1.9rem); }
+.seguridad-header h2 svg,.seguridad-panel h3 svg { width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; vertical-align:middle; }
+.seguridad-header p { margin:0; color:var(--color-texto-secundario); }
+.seguridad-resumen { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.seguridad-resumen article { display:flex; align-items:center; gap:13px; padding:15px; border:1px solid var(--color-borde); border-radius:13px; background:linear-gradient(145deg,#1d2229,#15191e); }
+.seguridad-resumen-icon { display:grid; place-items:center; width:42px; height:42px; border-radius:11px; color:#ffad70; background:rgba(244,123,32,.12); }
+.seguridad-resumen-icon svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+.seguridad-resumen strong { display:block; font-size:1.35rem; color:#fff; line-height:1.2; }
+.seguridad-resumen small { color:#aab2bd; font-size:.78rem; }
+.seguridad-nav { display:flex; gap:7px; padding:6px; border:1px solid var(--color-borde); border-radius:12px; background:#12161b; }
+.seguridad-nav-btn { display:flex; align-items:center; gap:8px; padding:10px 15px; border:1px solid transparent; border-radius:8px; background:transparent; color:#aeb6c0; cursor:pointer; font:inherit; transition:.18s ease; }
+.seguridad-nav-btn svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+.seguridad-nav-btn:hover { color:#fff; background:rgba(244,123,32,.08); }
+.seguridad-nav-btn.active { color:#17120e; background:linear-gradient(135deg,#ff9b4a,#f47b20); font-weight:700; }
+.seguridad-seccion { display:none; grid-column:1/-1; }
+.seguridad-seccion.active { display:block; animation:panelEnter .22s ease both; }
+.seguridad-seccion h3 { display:flex; align-items:center; gap:9px; margin:0 0 15px; }
+.seguridad-filtro { display:flex; align-items:center; gap:9px; margin:14px 0; padding:0 12px; border:1px solid #343b45; border-radius:10px; background:#101317; }
+.seguridad-filtro svg { width:18px; height:18px; flex:none; fill:none; stroke:#929ba7; stroke-width:1.8; }
+.seguridad-filtro input { width:100%; min-width:0; border:0; outline:0; box-shadow:none!important; background:transparent; }
+.seguridad-modulo[hidden] { display:none!important; }
+.seguridad-modulo { transition:border-color .18s ease,background .18s ease; }
+.seguridad-modulo:hover { border-color:rgba(244,123,32,.42); background:rgba(244,123,32,.035); }
+.seguridad-vista strong { color:#f2f4f6; }
+.seguridad-acciones label { padding:6px 9px; border:1px solid #343b45; border-radius:8px; background:#171c22; cursor:pointer; transition:.16s ease; }
+.seguridad-acciones label:has(input:checked) { border-color:rgba(244,123,32,.5); background:rgba(244,123,32,.10); color:#ffc08f; }
+.seguridad-acciones input,.seguridad-modulo-toggle input { width:15px; height:15px; min-height:0; cursor:pointer; }
+.seguridad-panel select[multiple] { min-height:112px; }
+.seguridad-panel small { display:block; margin-top:5px; color:#8f99a5; }
+.nav-icon { width:17px; height:17px; margin-right:7px; vertical-align:-3px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+@media(max-width:900px){.seguridad-panel{grid-template-columns:1fr}.seguridad-resumen{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.seguridad-resumen{grid-template-columns:1fr}.seguridad-nav{overflow-x:auto}.seguridad-nav-btn{white-space:nowrap;flex:1;justify-content:center;padding:10px 8px}.seguridad-panel{display:grid}}
