@@ -80,7 +80,7 @@ export function renderizarDashboard(profile, onLogout) {
       <button class="tab-btn active" data-tab="inventario">📦 Inventario</button>
       ${tienePermisoEnPerfil(profile, '/movimientos/entradas', 'leer') || tienePermisoEnPerfil(profile, '/movimientos/salidas', 'leer') ? '<button class="tab-btn" data-tab="movimientos">📋 Movimientos</button>' : ''}
       ${puedeRegistrarMovimientos() ? '<button class="tab-btn" data-tab="stock">🔄 Entrada/Salida</button>' : ''}
-      ${tienePermisoEnPerfil(profile, '/seguridad/roles', 'leer') ? '<button class="tab-btn" data-tab="seguridad">🔐 Roles y permisos</button>' : ''}
+      ${tienePermisoEnPerfil(profile, '/seguridad/roles', 'leer') ? '<button class="tab-btn" data-tab="seguridad"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 6v5c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-3Z"/><path d="m9 12 2 2 4-4"/></svg> Roles y permisos</button>' : ''}
     </nav>
 
     <!-- CONTENIDO POR PESTAÑA -->
