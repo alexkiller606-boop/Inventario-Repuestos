@@ -320,11 +320,8 @@ export async function renderizarSeguridad(contenedor) {
         input.checked = !valor;
         estadoPermiso('No se pudo cambiar el módulo: '+error.message,true);
       } else {
-        const status = box.querySelector(`[data-module-status="${enlacePorModulo.get(Number(modulos.find(m=>enlacePorModulo.get(m.id)?.id===Number(input.dataset.moduleId))?.id)?.modulo_id)}"]`);
-        if (status) status.innerHTML = iconoEstado(valor);
         estadoPermiso(valor ? 'Módulo habilitado.' : 'Módulo deshabilitado. Sus permisos se conservan, pero no estarán disponibles mientras permanezca apagado.');
-        const index = [...box.querySelectorAll('[data-module-id]')].indexOf(input);
-        const moduleId = modulos.filter(m=>enlacePorModulo.has(m.id))[index]?.id;
+        const moduleId = Number(modulos.find(m => enlacePorModulo.get(m.id)?.id === Number(input.dataset.moduleId))?.id);
         const node = box.querySelector(`[data-module-status="${moduleId}"]`);
         if (node) node.innerHTML = iconoEstado(valor);
         actualizarResumen();
@@ -352,7 +349,8 @@ export async function renderizarSeguridad(contenedor) {
   });
   buscadorPermisos.addEventListener('input', () => {
     const query = buscadorPermisos.value.trim().toLocaleLowerCase('es');
-    box.querySelectorAll('.permiso-modulo').forEach(card => {
+    const matrix = document.getElementById('matriz-permisos');
+    matrix.querySelectorAll('.permiso-modulo').forEach(card => {
       card.hidden = query && !card.textContent.toLocaleLowerCase('es').includes(query);
       if (query && !card.hidden) card.open = true;
     });
