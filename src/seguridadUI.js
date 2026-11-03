@@ -311,7 +311,9 @@ export async function renderizarSeguridad(contenedor) {
       }
       actualizarResumen();
     };
-    box.querySelectorAll('[data-module-id]').forEach(input => input.addEventListener('change', async () => {
+    box.querySelectorAll('[data-module-id]').forEach(input => {
+      input.addEventListener('click', event => event.stopPropagation());
+      input.addEventListener('change', async () => {
       const valor = input.checked;
       input.disabled = true;
       const {error} = await supabase.from('r_modulo_rol').update({habilitado:valor}).eq('id',Number(input.dataset.moduleId));
@@ -326,7 +328,8 @@ export async function renderizarSeguridad(contenedor) {
         if (node) node.innerHTML = iconoEstado(valor);
         actualizarResumen();
       }
-    }));
+      });
+    });
     box.querySelectorAll('[data-permission-id]').forEach(input => input.addEventListener('change', () => guardarPermiso(input)));
     box.querySelectorAll('[data-toggle-view]').forEach(button => button.addEventListener('click', async () => {
       const viewId = Number(button.dataset.toggleView);
