@@ -1261,3 +1261,30 @@ select option { background:#15191f; color:#f4f5f6; }
  .header-top { gap:16px; }
  .header-user { gap:8px; }
 }
+
+
+/* Jerarquía visual y estados del inventario */
+.stat-card h3 { display:flex; align-items:center; gap:8px; }
+.stat-card h3 .ui-icon { width:17px; height:17px; color:#ffad70; }
+.stat-card p { font-variant-numeric:tabular-nums; }
+.card > h2,.card > h3 { display:flex; align-items:center; gap:9px; }
+.card > h2 .ui-icon,.card > h3 .ui-icon { color:#ffad70; }
+.tabla th { font-size:.74rem; text-transform:uppercase; letter-spacing:.065em; }
+.tabla td { vertical-align:middle; }
+.tabla tbody tr:focus-within td { background:rgba(244,123,32,.07); }
+.acciones { white-space:nowrap; }
+.acciones .btn { margin:2px; }
+.badge-ok { background:rgba(53,201,138,.12); color:#69d9a7; border-color:rgba(53,201,138,.25); }
+.badge-faltante { background:rgba(255,98,98,.10); color:#ff9292; border-color:rgba(255,98,98,.25); }
+.config-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:1px solid rgba(255,255,255,.07); }
+.config-item:last-child { border-bottom:0; }
+.config-var-name { color:#cbd1d9; font-family:ui-monospace,monospace; font-size:.82rem; }
+.btn:disabled { opacity:.55; cursor:not-allowed; transform:none!important; box-shadow:none!important; }
+.mensaje { line-height:1.5; }
+.form-actions { display:flex; flex-wrap:wrap; gap:9px; }
+.form-actions .btn { min-width:130px; }
+@media(max-width:600px) {
+ .card > h2,.card > h3 { align-items:flex-start; }
+ .form-actions .btn { flex:1 1 100%; }
+ .tabla th { font-size:.68rem; }
+}
