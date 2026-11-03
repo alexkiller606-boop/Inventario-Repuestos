@@ -100,7 +100,7 @@ export function renderizarDashboard(profile, onLogout) {
     <nav class="tabs-nav">
       <button class="tab-btn active" data-tab="inventario">${iconoUI('package')} Inventario</button>
       ${tienePermisoEnPerfil(profile, '/movimientos/entradas', 'leer') || tienePermisoEnPerfil(profile, '/movimientos/salidas', 'leer') ? `<button class="tab-btn" data-tab="movimientos">${iconoUI('list')} Movimientos</button>` : ''}
-      ${puedeRegistrarMovimientos() ? '<button class="tab-btn" data-tab="stock">${iconoUI('refresh')} Entrada/Salida</button>' : ''}
+      ${puedeRegistrarMovimientos() ? `<button class="tab-btn" data-tab="stock">${iconoUI('refresh')} Entrada y salida</button>` : ''}
       ${tienePermisoEnPerfil(profile, '/seguridad/roles', 'leer') ? '<button class="tab-btn" data-tab="seguridad"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 6v5c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-3Z"/><path d="m9 12 2 2 4-4"/></svg> Roles y permisos</button>' : ''}
     </nav>
 
@@ -755,7 +755,7 @@ function renderizarTabla(datos) {
       <td>
         <span class="${r.stock < r.stock_minimo ? 'stock-bajo' : 'stock-ok'}">
           ${r.stock}
-          ${r.stock < r.stock_minimo ? ' ${iconoUI('warning', 'stock-warning')}' : ''}
+          ${r.stock < r.stock_minimo ? ` ${iconoUI('warning', 'stock-warning')}` : ''}
         </span>
         <small class="stock-min">min: ${r.stock_minimo}</small>
       </td>
