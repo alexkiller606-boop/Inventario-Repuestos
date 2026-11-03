@@ -25,6 +25,7 @@ import { renderizarSeguridad } from './seguridadUI.js';
 function iconoUI(tipo, clase = '') {
   const paths = {
     motorcycle: '<path d="M5 17h2l3-6h4l3 6h2"/><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="m10 11-2-3H5m8 3 2-3h3"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
     package: '<path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="M3 8v9l9 5 9-5V8M12 13v9"/>',
     list: '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
     refresh: '<path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.4-3"/>',
